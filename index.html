@@ -206,9 +206,12 @@
             margin-bottom: 2.5rem;
             color: var(--accent2);
         }
-        .links a {
-            display: block;
-            margin: 1.2rem auto;
+
+        .links .link-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0.8rem auto;
             color: var(--text);
             text-decoration: none;
             font-weight: bold;
@@ -220,21 +223,39 @@
             width: 90%;
             max-width: 450px;
             transition: all 0.3s ease;
-        }
-        .links a:hover {
-            background-color: var(--accent);
-            color: #000;
+            cursor: pointer;
+            box-sizing: border-box;
         }
 
-        body.light-mode .links a {
-             background-color: rgba(255,255,255,0.1);
+        .links .link-item .icon {
+            margin-right: 0.6em;
+        }
+
+        .links .link-item a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .links .link-item:hover {
+            background-color: var(--accent);
+        }
+        .links .link-item:hover,
+        .links .link-item:hover a {
+             color: #000;
+        }
+
+        body.light-mode .links .link-item {
+             background-color: rgba(0,0,0,0.05);
              border-color: var(--accent);
              color: var(--text);
         }
-        body.light-mode .links a:hover {
+        body.light-mode .links .link-item:hover {
             background-color: var(--accent);
-            color: #ffffff;
             border-color: var(--accent);
+        }
+        body.light-mode .links .link-item:hover,
+        body.light-mode .links .link-item:hover a {
+            color: #ffffff;
         }
 
         .install-text {
@@ -385,12 +406,18 @@
         </div>
     </nav>
 
-    <section id="releases" class="active">
+<section id="releases" class="active">
         <div class="links">
             <h2>Latest Downloads</h2>
-            <a href="repository.dexe-1.0.8.zip">repository.dexe-1.0.8.zip</a>
-            <a href="service.subloader-0.2.2.zip">service.subloader-0.2.2.zip</a>
-            <a href="service.subtitles.titlovi-1.9.0.zip">service.subtitles.titlovi-1.9.0.zip</a>
+            <div class="link-item">
+                <span class="icon">📦</span> <a href="repository.dexe-1.0.8.zip" download>repository.dexe-1.0.8.zip</a>
+            </div>
+            <div class="link-item">
+                <span class="icon">📦</span> <a href="service.subloader-0.2.2.zip" download>service.subloader-0.2.2.zip</a>
+            </div>
+            <div class="link-item">
+                <span class="icon">📦</span> <a href="service.subtitles.titlovi-1.9.0.zip" download>service.subtitles.titlovi-1.9.0.zip</a>
+            </div>
         </div>
     </section>
 
