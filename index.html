@@ -191,8 +191,9 @@
         section {
             display: none;
             padding: 2.5rem 2rem;
-            flex-grow: 1;
+            flex-grow: 0;
             transition: opacity 0.3s ease-in-out;
+            box-sizing: border-box;
         }
         section.active {
             display: block;
@@ -259,7 +260,7 @@
         }
 
         .install-text {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
             color: fff;
             font-size: 1rem;
@@ -269,6 +270,20 @@
             color: var(--accent2);
             display: block;
             margin: 1.2rem 0 0.4rem;
+        }
+
+        code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 0.15em 0.4em;
+            border-radius: 3px;
+            color: var(--accent);
+        }
+
+        body.light-mode code {
+            background-color: rgba(0, 0, 0, 0.08);
+            color: var(--accent);
         }
 
         hr {
@@ -422,61 +437,83 @@
     </section>
 
     <section id="install">
+    
         <div class="install-text">
-            <strong>Enable ZIP installation in Kodi:</strong>
+            <strong>Omogućite instalaciju iz ZIP fajla u Kodi-ju:</strong><br>
+            - Otvorite Kodi > Settings > System > Add-ons > Omogućite opciju "Unknown sources"<br><br>
+
+            <strong>Metod 1: Instalacija putem preuzetog Repository ZIP fajla</strong><br>
+            - Preuzmite ZIP fajl dEXE's Addons Repository iz 'Releases' sekcije iznad.<br>
+            - U Kodi-ju, idite na: Add-ons > Install from ZIP file.<br>
+            - Pronađite i izaberite preuzeti ZIP fajl.<br>
+            - Sačekajte obaveštenje 'Add-on installed'.<br>
+            - Idite na: Install from repository > dEXE's Addons Repository.<br>
+            - Pregledajte kategorije (npr. Subtitles/Services add-ons) i izaberite Addon koji želite da instalirate.<br>
+            - Kliknite na 'Install' i potvrdite instalaciju potrebnih zavisnosti (dependencies).<br>
+            - Automatsko ažuriranje (Auto-updates) će raditi.<br><br>
+
+            <strong>Metod 2: Instalacija putem Kodi File Manager-a (direktni GitHub izvor)</strong><br>
+            - Otvorite Kodi > Settings > File Manager.<br>
+            - Kliknite na 'Add source'.<br>
+            - Za putanju (path), unesite tačno: <b><code>https://deklica.github.io</code></b> i kliknite OK.<br>
+            - Unesite ime za izvor (source), npr. <code>dEXE's Addons</code>, i kliknite OK.<br>
+            - Vratite se na Add-ons > Install from ZIP file.<br>
+            - Izaberite izvor koji ste dodali (<code>dEXE's Addons</code>).<br>
+            - <b>Sada izaberite jednu opciju:</b><br>
+                ** Opcija A <i>(Preporučeno radi automatskog ažuriranja)</i>: Instalacija Repozitorijuma **<br>
+                  - Izaberite ZIP fajl repozitorijuma (npr. <code>repository.dexe-x.y.z.zip</code>).<br>
+                  - Sačekajte obaveštenje 'Add-on installed'.<br>
+                  - Idite na: Install from repository > dEXE's Addons Repository.<br>
+                  - Pregledajte kategorije (npr. Subtitles/Services add-ons) i izaberite Addon koji želite da instalirate.<br>
+                  - Kliknite na 'Install' i potvrdite instalaciju potrebnih zavisnosti (dependencies).<br>
+                  - Automatsko ažuriranje (Auto-updates) će raditi.<br>
+                ** Opcija B <i>(Direktna instalacija Addona - Nema automatskog ažuriranja)</i>: **<br>
+                  - Izaberite ZIP fajl konkretnog addona (npr. <code>service.subtitles.titlovi-x.y.z.zip</code> ili <code>service.subloader-x.y.z.zip</code>).<br>
+                  - Sačekajte obaveštenje 'Add-on installed'.<br>
+                  - Addon je instaliran ali se **NEĆE automatski ažurirati**. Potrebno je ručno ažuriranje.<br><br>
+        </div>
+    
+        <hr>
+    
+        <div class="install-text">
+            <strong>Enable ZIP installation in Kodi:</strong><br>
             - Open Kodi > Settings > System > Add-ons > Enable "Unknown sources"<br><br>
 
             <strong>Method 1: Install via Repository ZIP file</strong><br>
-            - Download dEXE's Addons Repository<br>
-            - In Kodi, go to: Add-ons > Install from ZIP file<br>
-            - Navigate to and select the downloaded ZIP<br>
-            - Go to Install from repository and select Addon<br>
-            - Install preferred Addon<br>
-            - Autoupdate will work<br><br>
+            - Download the dEXE's Addons Repository ZIP file from the 'Releases' section above.<br>
+            - In Kodi, go to: Add-ons > Install from ZIP file.<br>
+            - Navigate to and select the downloaded ZIP file.<br>
+            - Wait for the 'Add-on installed' notification.<br>
+            - Go to: Install from repository > dEXE's Addons Repository.<br>
+            - Browse the categories (e.g., Subtitles/Services add-ons) and select the Addon you want to install.<br>
+            - Click 'Install' and confirm any dependencies.<br>
+            - Auto-updates will work.<br><br>
 
             <strong>Method 2: Install via Kodi File Manager (direct GitHub source)</strong><br>
-            - Open Kodi > go to Settings > File Manager<br>
-            - Click Add source<br>
-            - Use the following URL: https://deklica.github.io/<br>
-            - Name it something like dEXE's Addons and press OK<br>
-            - Now go to Add-ons > Install from ZIP file<br>
-            - Select the source (dEXE's Addons) and install the repository ZIP<br>
-              &nbsp;&nbsp;or You can also just install your preferred addon.<br>
-            - Then go to Install from repository > dEXE's Addons Repository<br>
-            - Install preferred Addon<br>
-            - Autoupdate will work (If you installed the addon through a repository)<br><br>
+            - Open Kodi > Settings > File Manager.<br>
+            - Click 'Add source'.<br>
+            - For the path, enter exactly: <b><code>https://deklica.github.io</code></b> and click OK.<br>
+            - Enter a name for the source, e.g., <code>dEXE's Addons</code>, and click OK.<br>
+            - Go back to Add-ons > Install from ZIP file.<br>
+            - Select the source you added (<code>dEXE's Addons</code>).<br>
+            - <b>Now choose one option:</b><br>
+                ** Option A <i>(Recommended for Auto-Updates)</i>: Install Repository **<br>
+                  - Select the repository ZIP file (e.g., <code>repository.dexe-x.y.z.zip</code>).<br>
+                  - Wait for the 'Add-on installed' notification.<br>
+                  - Go to: Install from repository > dEXE's Addons Repository.<br>
+                  - Browse the categories (e.g., Subtitles/Services add-ons) and select the Addon you want to install.<br>
+                  - Click 'Install' and confirm any dependencies.<br>
+                  - Auto-updates will work.<br>
+                ** Option B <i>(Direct Addon Install - No Auto-Updates)</i>: **<br>
+                  - Select the specific addon ZIP file (e.g., <code>service.subtitles.titlovi-x.y.z.zip</code> or <code>service.subloader-x.y.z.zip</code>).<br>
+                  - Wait for the 'Add-on installed' notification.<br>
+                  - The addon is installed but **will NOT auto-update**. Manual updates required.<br><br>
         </div>
-        
-        <hr>
-        
-        <div class="install-text">
-            <strong>Omogućite ZIP instalaciju u Kodi:</strong>
-            - Otvorite Kodi > Podešavanja > Sistem > Dodaci > Omogućite "Nepoznate izvore"<br><br>
 
-            <strong>Metod 1: Instalacija putem Repository ZIP fajla</strong><br>
-            - Preuzmite dEXE's Addons Repository<br>
-            - U Kodi-ju, idite na: Dodaci > Instaliraj iz ZIP fajla<br>
-            - Navigirajte do i izaberite preuzeti ZIP<br>
-            - Idite na Instaliraj iz repozitorijuma i izaberite Addon<br>
-            - Instalirajte preferirani Addon<br>
-            - Automatsko ažuriranje će raditi<br><br>
-
-            <strong>Metod 2: Instalacija putem Kodi File Manager-a (direktni GitHub izvor)</strong><br>
-            - Otvorite Kodi > idite na Podešavanja > File Manager<br>
-            - Kliknite na Dodaj izvor<br>
-            - Koristite sledeći URL: https://deklica.github.io/<br>
-            - Dajte mu ime poput dEXE's Addons i pritisnite OK<br>
-            - Sada idite na Dodaci > Instaliraj iz ZIP fajla<br>
-            - Izaberite izvor (dEXE's Addons) i instalirajte repository ZIP<br>
-              &nbsp;&nbsp;ili takođe možete samo instalirati vaš preferirani addon.<br>
-            - Zatim idite na Instaliraj iz repozitorijuma > dEXE's Addons Repository<br>
-            - Instalirajte preferirani Addon<br>
-            - Automatsko ažuriranje će raditi (ako ste addon instalirali preko repozitorijuma)<br><br>
-        </div>
     </section>
 
     <footer>
-        © 2025 dEXE. All rights reserved.
+        © <span id="copyright-year"></span> dEXE. All rights reserved.
     </footer>
 
     <script>
@@ -494,6 +531,7 @@
                 });
             }
         });
+
         function toggleTheme() {
             document.body.classList.toggle('light-mode');
         }
@@ -516,8 +554,15 @@
                     if(firstSection) firstSection.classList.add('active');
                   }
              }
+
+             const currentYear = new Date().getFullYear();
+             const yearSpan = document.getElementById('copyright-year');
+             if (yearSpan) {
+                 yearSpan.textContent = currentYear;
+             }
          });
-         
+
     </script>
+
 </body>
 </html>
