@@ -1398,6 +1398,7 @@
             margin-left: auto;
             border-style: dashed;
         }
+        .chip.chip-dep { border-style: dashed; }   /* "Zastareli": nije kategorija repoa, nego poseban spisak */
         .chip .n {
             display: inline-block;
             margin-left: 0.35em;
@@ -1781,7 +1782,9 @@
             padding: 0.05rem 0.5rem;
         }
         .cat-card.is-broken .cat-icon,
-        .cat-card.is-broken .cat-name {
+        .cat-card.is-broken .cat-name,
+        .cat-card.is-dep .cat-icon,
+        .cat-card.is-dep .cat-name {
             opacity: 0.6;
         }
         .cat-more {
@@ -2811,6 +2814,7 @@
         .ref-row .txt { color: var(--muted); }
         .ref-row .txt.b { color: var(--text); font-weight: 700; }
         .ref-more { margin-top: 0.7rem; padding-top: 0.8rem; border-top: 1px solid var(--border); }   /* drugi naslov u istoj kartici (more) */
+        .ref-more.sub h4 { font-size: 0.88rem; }   /* sub: true - podnaslov kartice, isti font kao red Helios (sub) */
         .ref-lbl.block { flex-basis: 100%; }                /* oznaka u svom redu, linkovi ispod */
         .ref-br { flex-basis: 100%; height: 0; }            /* prelom reda unutar reda linkova (opcija 'r') */
         .ref-row s:has(> code) { text-decoration: none; }
@@ -3075,6 +3079,8 @@
         .rx-txt { font-size: 0.85rem; color: var(--muted); }
         .rx-txt.b { font-weight: 700; color: var(--text); }
         .tight { margin-left: -0.2rem; }
+        .glue { margin-left: -0.35rem; }   /* opcija 'g': zalepljeno uz prethodni, npr. zatvorena zagrada */
+        .ref-row .glue { margin-left: -0.45rem; }
         .rx-chev { color: var(--muted); opacity: 0.6; margin: 0 -0.1rem; }
         .rx-br { flex-basis: 100%; height: 0; }
         .rx-v s { opacity: 0.55; }
@@ -3109,6 +3115,9 @@
         .rx-note { margin: 0.25rem 0 0; flex-basis: 100%; font-size: 0.82rem; color: var(--muted); }
         .rx-pnote { margin: 0.3rem 0 0.7rem; font-size: 0.82rem; color: var(--muted); }
         .rx-more { margin-top: 0.6rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+        .rx-more.sub .rx-mono { display: none; }   /* sub: true - podnaslov kartice, bez ikonice, font kao red Helios */
+        .rx-more.sub .rx-ph h4 { font-size: 0.82rem; font-weight: 600; }
+        .rx-more.sub .rx-ph p { font-size: 0.8rem; }
 
         .rx-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1.4rem; margin: -0.3rem 0 1.4rem; }
         .rx-search {
@@ -3367,6 +3376,18 @@
         .cat-name { line-height: 21px; }
         .cat-id { margin-top: 2px; line-height: 16px; }
         .cat-meta { margin-top: 8px; line-height: 18px; gap: 6px 10px; }
+        .cat-summary {                              /* summary iz addon.xml: sitno, najviše dva reda (ceo tekst u tooltip-u) */
+            margin-top: 6px;
+            font-size: 0.75rem;
+            line-height: 16px;
+            color: var(--muted);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            overflow-wrap: anywhere;
+        }
         .cat-extra { margin-top: 6px; line-height: 17px; }
         .cat-tag { margin-top: 2px; }
         .cat-actions { margin-top: 8px; gap: 6px 8px; }
@@ -3376,6 +3397,7 @@
         .cat-inside .tut-back { line-height: 18px; }
         .cat-inside-name { line-height: 21px; }
         .cat-inside-sub { margin-top: 2px; line-height: 16px; }
+        .cat-inside-summary { margin: 6px 0 0; font-size: 0.85rem; line-height: 20px; color: var(--muted); overflow-wrap: anywhere; }   /* ceo summary repoa */
         .cat-inside-note { line-height: 18px; }
         .cat-inside-src { padding-top: 10px; gap: 4px; }
         .cat-inside-src > div { line-height: 20px; }
@@ -4116,8 +4138,8 @@
         //   REF_ADDONS = preporučeni addoni: kategorija > addoni
         //
         // Deo:     { id, sr, en, cols: 2 (kartice u dve kolone), cards: [...] }
-        // Kartica: { title, url, sr, en (opis; \n = novi red), rows: [...], note, more: [{ title, url, sr, en, rows }] }
-        //          more = još jedan naslov sa opisom i linkovima u istoj kartici
+        // Kartica: { title, url, sr, en (opis; \n = novi red), rows: [...], note, more: [{ title, url, sr, en, rows, sub }] }
+        //          more = još jedan naslov sa opisom i linkovima u istoj kartici; sub: true = manji podnaslov (font kao red Helios)
         // Red:     { lbl (oznaka levo), links: [...], note (napomena ispod linkova),
         //            sub: true (uvučen, pripada prethodnom), dot: true (samo tačkasta linija iznad), block: true (oznaka u svom redu) }
         // Link:    [tekst, url, opcije]   tekst = 'string' ili { sr, en };  url null = običan tekst
@@ -4127,6 +4149,7 @@
         //     'n' bez separatora ispred (nastavak prethodnog, npr. TMDb (API))
         //     'r' počinje nov red
         //     'k' polje kao adresa (klik označi ceo tekst)
+        //     'g' zalepljeno uz prethodni, bez razmaka (npr. zatvorena zagrada)
         //     's' precrtano
         //     'c' dugme za kopiranje
         //
@@ -4174,10 +4197,10 @@
                     { links: [['Play Store', 'https://play.google.com/store/apps/details?id=app.wako'], ['App Store', 'https://apps.apple.com/us/app/wako-tv/id1456393880'], ['GitHub', 'https://github.com/wako-app']] },
                     { lbl: { sr: 'Addoni', en: 'Add-ons' }, links: [['wako-unofficial-addons', 'https://github.com/orgs/wako-unofficial-addons/repositories'], [{ sr: 'manifest = adresa koja se dodaje u Wako za instalaciju', en: 'manifest = the address you add in Wako to install' }, null, 'r']] },
                     { sub: true, lbl: 'Helios', links: [['manifest', 'https://raw.githubusercontent.com/wako-unofficial-addons/helios/master/dist/manifest.json', 'c'], ['Config:', null], ['Magnify Scrapers', 'https://magnify.pages.dev/', 'n'], ['Providers URL', 'https://gist.githubusercontent.com/reaperc/193afd096ad65e7a8746042ff871dc16/raw/154716f069f4b0f3f1e18b380aabb1974e995e04/gistfile1.txt', 'c'], ['scraper4wako', 'https://github.com/morpheasgr/scraper4wako'], ['Orion', 'https://panel.orionoid.com/']] },
-                    { sub: true, lbl: 'Nomos', links: [['manifest', 'https://raw.githubusercontent.com/wako-unofficial-addons/nomos/master/dist/manifest.json', 'c'], ['Config:', null], ['Plugins URL', 'https://pastebin.com/raw/8jehXnqz', 'cn']] },
-                    { sub: true, lbl: 'Oola', links: [['manifest', 'https://raw.githubusercontent.com/s7m/oola-wako-addon/master/dist/manifest.json', 'c']] },
-                    { sub: true, lbl: 'TMDb adult content', links: [['manifest', 'https://pastebin.com/raw/C3k0kLBf', 'c']] },
-                    { lbl: { sr: 'Zvanični addoni', en: 'Official add-ons' }, block: true, links: [['IMDb', null], ['The Movie DB', null], ['Kodi Select', null], ['Watch Now', null], ['Watch on iTunes', null], ['Premiumize Explorer', null]] }
+                    { sub: true, lbl: 'Nomos', links: [['manifest', 'https://raw.githubusercontent.com/wako-unofficial-addons/nomos/master/dist/manifest.json', 'c'], ['Config:', null], ['Plugins URL', 'https://pastebin.com/raw/8jehXnqz', 'cn'], [{ sr: '(zastareo)', en: '(deprecated)' }, null, 'n']] },
+                    { sub: true, lbl: 'Oola', links: [['manifest', 'https://raw.githubusercontent.com/s7m/oola-wako-addon/master/dist/manifest.json', 'c'], [{ sr: '(zastareo)', en: '(deprecated)' }, null, 'n']] },
+                    { sub: true, lbl: 'TMDb adult content', links: [['manifest', 'https://pastebin.com/raw/C3k0kLBf', 'c'], [{ sr: '(zastareo)', en: '(deprecated)' }, null, 'n']] },
+                    { lbl: { sr: 'Zvanični addoni', en: 'Official add-ons' }, block: true, links: [['Wako Catalog', null], ['Where to Watch', null], ['OpenSubtitles', null], ['IMDb', null, 's'], ['The Movie DB', null, 's'], ['Kodi Select', null, 's'], ['Watch on iTunes', null, 's'], ['Premiumize Explorer', null, 's']] }
                   ] },
                 { title: 'Unchained', url: 'https://www.reddit.com/r/UnchainedRD/comments/qe1r43/welcome_to_the_unchained_for_real_debrid_subreddit/', sr: 'Android klijent za Real-Debrid.', en: 'Android client for Real-Debrid.',
                   rows: [
@@ -4202,14 +4225,21 @@
                     { links: [['Dezor', 'https://www.dezor.net/', 'b'], ['(Win, Linux, macOS, Android)', null, 'n'], ['URL:', null, 'r'], ['KOOL.TO', null, 'kn'], ['VAVOO.TO', null, 'kn']] }
                   ] }
             ] },
-            { id: 'accounts', sr: 'Nalozi', en: 'Accounts', cards: [
+            { id: 'accounts', sr: 'Nalozi', en: 'Accounts', cols: 2, cards: [
                 { title: { sr: 'Praćenje gledanja i liste', en: 'Watch tracking & lists' },
                   sr: 'Nalog koji većina addona traži: istorija gledanja, liste, sinhronizacija između uređaja.', en: 'The account most add-ons ask for: watch history, lists, sync across devices.',
                   rows: [
                     { links: [['Trakt', 'https://trakt.tv/', 'bp'], ['activate', 'https://trakt.tv/activate'], ['API', 'https://trakt.tv/oauth/applications'], ['status', 'https://status.trakt.tv']],
                       note: { sr: 'besplatan nalog: najviše 2 community aplikacije', en: 'free account: up to 2 community apps' } },
-                    { links: [['TMDB lists', null], ['MDBList', 'https://mdblist.com/'], ['SIMKL', 'https://simkl.com/'], ['PunchPlay', 'https://punchplay.tv/'], ['WeTrakr', 'https://wetrakr.com/'], ['couchmoney.tv', 'https://couchmoney.tv/'], ['FlickList', 'https://flicklist.tv/'], ['OMNIS', 'https://omnisapp.net/']] }
-                  ] },
+                    { links: [['TMDB lists', null], ['MDBList', 'https://mdblist.com/'], ['SIMKL', 'https://simkl.com/'], ['PunchPlay', 'https://punchplay.tv/'], ['WeTrakr', 'https://wetrakr.com/'], ['couchmoney.tv', 'https://couchmoney.tv/'], ['FlickList', 'https://flicklist.tv/'], ['OMNIS', 'https://omnisapp.net/'], ['AniList', 'https://anilist.co/']] }
+                  ],
+                  more: [{ title: { sr: 'giladg liste izdanja', en: 'giladg release lists' }, sub: true,
+                    sr: 'Čuvene liste najnovijih izdanja', en: 'The well-known lists of the latest releases',
+                    rows: [
+                      { lbl: 'Latest', links: [['Trakt', 'https://app.trakt.tv/users/giladg/lists/latest-releases'], ['WeTrakr', 'https://wetrakr.com/lists/30497?sort_by=added&sort_dir=desc'], ['MDBList', 'https://mdblist.com/lists/giladg2/latest-releases'], ['MDBList (kartana)', 'https://mdblist.com/lists/kartana/latest-digital-releases']] },
+                      { lbl: 'Latest 4K', links: [['Trakt', 'https://app.trakt.tv/users/giladg/lists/latest-4k-releases'], ['WeTrakr', 'https://wetrakr.com/lists/22763?sort_by=added&sort_dir=desc'], ['MDBList', 'https://mdblist.com/lists/giladg2/latest-4k-releases']] },
+                      { lbl: 'Latest Dolby Vision', links: [['Trakt', 'https://app.trakt.tv/users/giladg/lists/latest-dolby-vision'], ['WeTrakr', 'https://wetrakr.com/lists/22764?sort_by=added&sort_dir=desc'], ['MDBList', 'https://mdblist.com/lists/giladg2/latest-dolby-vision-releases']] }
+                    ] }] },
                 { title: { sr: 'Premium provajderi (debrid)', en: 'Premium providers (debrid)' }, sr: 'Plaćeni servisi za brze i pouzdane izvore.', en: 'Paid services for fast, reliable sources.',
                   rows: [
                     { links: [['TorBox', 'https://www.torbox.app/subscription?referral=53ce9635-cd0f-4411-a071-a501eb835734', 'b'], ['AllDebrid', 'https://alldebrid.com/'], ['Premiumize', 'https://www.premiumize.me/'], ['Offcloud', 'https://offcloud.com/'], ['Debrid-Link', 'https://debrid-link.fr/'], ['put.io', 'https://put.io/']] },
@@ -4218,11 +4248,11 @@
                     { links: [['ResolveURL', '#catalog/dexe/script.module.resolveurl', 'b'], ['(dependencies)', null, 'n'], [{ sr: 'tu se aktivira debrid, ili u samom addonu', en: 'debrid is activated there, or in the add-on itself' }, null, 'r']] },
                     { lbl: { sr: 'Više', en: 'More' }, links: [['awesome-debrid', 'https://github.com/debridmediamanager/awesome-debrid'], ['Debrid Media Manager', 'https://debridmediamanager.com/']] }
                   ],
-                  note: { sr: 'Real-Debrid je postao neupotrebljiv - pređite na TorBox.', en: 'Real-Debrid has become unusable - move on to TorBox.' } },
-                { title: 'Orion', url: 'https://orionoid.com/', sr: 'Indeks izvora za više addona.\nBesplatno: 100 linkova dnevno.', en: 'Media index used by several add-ons.\nFree: 100 links a day.',
-                  rows: [
-                    { links: [['panel', 'https://panel.orionoid.com/'], [{ sr: 'Orion u katalogu', en: 'Orion in the catalog' }, '#catalog/dexe/script.module.orion']] }
-                  ] },
+                  note: { sr: 'Real-Debrid je postao neupotrebljiv - pređite na TorBox.', en: 'Real-Debrid has become unusable - move on to TorBox.' },
+                  more: [{ title: 'Orion', url: 'https://orionoid.com/', sr: 'Indeks izvora za više addona.\nBesplatno: 100 linkova dnevno.', en: 'Media index used by several add-ons.\nFree: 100 links a day.',
+                    rows: [
+                      { links: [['panel', 'https://panel.orionoid.com/'], [{ sr: 'Orion u katalogu', en: 'Orion in the catalog' }, '#catalog/dexe/script.module.orion']] }
+                    ] }] },
                 { title: 'YouTube', url: 'https://www.youtube.com/', sr: 'Za YouTube addon treba sopstveni API ključ.', en: 'The YouTube add-on needs your own API key.',
                   rows: [
                     { links: [['activate', 'https://www.youtube.com/activate'], [{ sr: 'YouTube u katalogu', en: 'YouTube in the catalog' }, '#catalog/dexe/plugin.video.youtube']] },
@@ -4230,7 +4260,7 @@
                   ] },
                 { title: { sr: 'Opciono (API)', en: 'Optional (API)' }, sr: 'Nalozi za metapodatke, slike i scrobbling.', en: 'Accounts for metadata, artwork and scrobbling.',
                   rows: [
-                    { links: [['IMDb', 'https://www.imdb.com/'], ['TMDb', 'https://www.themoviedb.org/'], ['(API)', 'https://www.themoviedb.org/settings/api', 'n'], ['TheTVDB', 'https://www.thetvdb.com/'], ['TheAudioDB', 'https://www.theaudiodb.com/'], ['OMDb', 'http://www.omdbapi.com/'], ['AniList', 'https://anilist.co/'], ['Fanart', 'https://fanart.tv/'], ['OpenWeather', 'https://openweathermap.org/'], ['Last.fm', 'https://www.last.fm/'], ['Libre.fm', 'https://www.libre.fm/']] }
+                    { links: [['IMDb', 'https://www.imdb.com/'], ['TMDb', 'https://www.themoviedb.org/'], ['(API)', 'https://www.themoviedb.org/settings/api', 'n'], ['TheTVDB', 'https://www.thetvdb.com/'], ['TheAudioDB', 'https://www.theaudiodb.com/'], ['OMDb', 'http://www.omdbapi.com/'], ['Fanart', 'https://fanart.tv/'], ['RPDB', 'https://ratingposterdb.com/'], ['(free API:', null, 'n'], ['t0-free-rpdb', null, 'kn'], [')', null, 'g'], ['OpenWeather', 'https://openweathermap.org/'], ['Last.fm', 'https://www.last.fm/'], ['Libre.fm', 'https://www.libre.fm/']] }
                   ] }
             ] }
         ];
@@ -4331,9 +4361,10 @@
             ] },
             { sr: 'Sport', en: 'Sport', items: [
                 { n: 'DLTV', star: true, note: '(Daddylive)', cat: 'dexe/plugin.video.dltv', repos: ['dEXE', 'Arkane14 Repository'] },
-                { n: 'Mad Titan Sports V2.0', star: true, cat: 'repository.Magnetic/plugin.video.madtitansports', repos: ['Magnetic Repo'] },
-                { n: 'Rising Tides', cat: 'repository.Rising.Tides/plugin.video.Rising.Tides', repos: ['Rising Tides Repository'] },
+                { n: 'Mad Titan Sports V2.0', star: true, cat: 'repository.Magnetic/plugin.video.madtitansports', repos: ['Magnetic Repo'],
+                  extra: [{ lbl: 'Config fix', links: [['Store Refresh Notifications & Enable GUI Front Page OFF', null]] }] },
                 { n: 'The Loop', cat: 'repository.loop/plugin.video.the-loop', repos: ['Loop Repository'] },
+                { n: 'Rising Tides', cat: 'repository.Rising.Tides/plugin.video.Rising.Tides', repos: ['Rising Tides Repository'] },
                 { n: 'SportHD', cat: 'repository.bugatsinho/plugin.video.sporthdme', repos: ['Bugatsinho repository'] },
                 { n: 'ApeX Sports', cat: 'repository.arxtic-ape/plugin.video.apex_sports', repos: ['Arxtic Ape Addon Repository'] }
             ] },
@@ -4418,14 +4449,14 @@
                 let h = url
                     ? `<a href="${escapeHtml(url)}"${ext(url) ? ' target="_blank" rel="noopener"' : ''}${opt.includes('b') ? ' class="b"' : ''}>${t(text)}</a>`
                     : opt.includes('k') ? `<code class="ref-code">${t(text)}</code>`
-                    : `<span class="txt${opt.includes('b') ? ' b' : ''}">${t(text)}</span>`;
+                    : `<span class="txt${opt.includes('b') ? ' b' : ''}${opt.includes('g') ? ' glue' : ''}">${t(text)}</span>`;
                 if (opt.includes('s')) h = `<s>${h}</s>`;
                 if (opt.includes('c')) h += `<button type="button" class="copy-btn copy-ico" data-copy="${escapeHtml(url)}" data-done="${escapeHtml(DONE_ICON)}" title="Copy URL" aria-label="Copy URL">${COPY_ICON}</button>`;
                 return h;
             };
             const links = arr => arr.map((l, i) => {
                 const o = l[2] || '';
-                const sep = !i ? '' : o.includes('r') ? '<span class="ref-br"></span>' : o.includes('n') ? ' '
+                const sep = !i ? '' : o.includes('r') ? '<span class="ref-br"></span>' : o.includes('g') ? '' : o.includes('n') ? ' '
                     : `<span class="ref-sep">${(arr[i - 1][2] || '').includes('p') ? '›' : '·'}</span>`;
                 return sep + link(l);
             }).join('');
@@ -4437,7 +4468,7 @@
                 for (const c of part.cards) {
                     const title = c.url ? `<a href="${escapeHtml(c.url)}" target="_blank" rel="noopener">${t(c.title)}</a>` : t(c.title);
                     html += `<div class="ref-card"><h4>${title}</h4>${c.sr ? `<p class="ref-desc">${t(c).replace(/\n/g, '<br>')}</p>` : ''}
-                        <div class="ref-rows">${c.rows.map(row).join('')}</div>${c.note ? `<p class="ref-note">${t(c.note)}</p>` : ''}${(c.more || []).map(m => `<div class="ref-more"><h4>${m.url ? `<a href="${escapeHtml(m.url)}" target="_blank" rel="noopener">${t(m.title)}</a>` : t(m.title)}</h4>${m.sr ? `<p class="ref-desc">${t(m).replace(/\n/g, '<br>')}</p>` : ''}<div class="ref-rows">${m.rows.map(row).join('')}</div></div>`).join('')}</div>`;
+                        <div class="ref-rows">${c.rows.map(row).join('')}</div>${c.note ? `<p class="ref-note">${t(c.note)}</p>` : ''}${(c.more || []).map(m => `<div class="ref-more${m.sub ? ' sub' : ''}"><h4>${m.url ? `<a href="${escapeHtml(m.url)}" target="_blank" rel="noopener">${t(m.title)}</a>` : t(m.title)}</h4>${m.sr ? `<p class="ref-desc">${t(m).replace(/\n/g, '<br>')}</p>` : ''}<div class="ref-rows">${m.rows.map(row).join('')}</div></div>`).join('')}</div>`;
                 }
                 html += '</div></div>';
             }
@@ -4530,7 +4561,7 @@
             const BI = (sr, en) => `<span data-l="sr">${sr}</span><span data-l="en">${en}</span>`;
 
             const pill = ([text, url, opt = '']) => {
-                const tight = opt.includes('n') ? ' tight' : '';
+                const tight = opt.includes('g') ? ' glue' : opt.includes('n') ? ' tight' : '';
                 let h = url
                     ? `<a class="rx-pill${opt.includes('b') ? ' strong' : ''}${tight}" href="${escapeHtml(url)}"${ext(url) ? ' target="_blank" rel="noopener"' : ''}>${t(text)}</a>`
                     : opt.includes('k') ? `<code class="rx-code${tight}">${t(text)}</code>`
@@ -4558,7 +4589,7 @@
                     + `<div><h4>${title}</h4>${c.sr ? `<p>${t(c).replace(/\n/g, '<br>')}</p>` : ''}</div></div>`;
             };
             const panel = c => `<article class="rx-panel">${head(c)}${c.rows.map(row).join('')}${c.note ? `<p class="rx-pnote">${t(c.note)}</p>` : ''}`
-                + (c.more || []).map(m => `<div class="rx-more">${head(m)}${m.rows.map(row).join('')}</div>`).join('') + '</article>';
+                + (c.more || []).map(m => `<div class="rx-more${m.sub ? ' sub' : ''}">${head(m)}${m.rows.map(row).join('')}</div>`).join('') + '</article>';
 
 
             const catItems = c => c.groups ? c.groups.flatMap(g => g.items) : c.items;
@@ -4654,6 +4685,9 @@
                 if (e.target.closest('#rx-info a')) info.classList.remove('open');
             });
             document.addEventListener('keydown', e => { if (e.key === 'Escape') info.classList.remove('open'); });
+            document.addEventListener('click', e => {
+                if (info.classList.contains('open') && !e.target.closest('#rx-info, .rx-tile')) info.classList.remove('open');
+            });
 
             const search = root.querySelector('#rx-search');
             const setPh = () => { search.placeholder = isSr() ? search.dataset.phSr : search.dataset.phEn; };
@@ -4791,6 +4825,12 @@
                 repo: ''
             },
             {
+                group: 'mod', id: 'plugin.video.playlistbee', name: 'Bee',
+                type: { sr: 'Video', en: 'Video' },
+                desc: { sr: 'Playlist Bee – gledanje M3U/M3U8, PLX i Xtream Codes IPTV lista, sa EPG-om, favoritima i pretragom.', en: 'Playlist Bee – watch M3U/M3U8, PLX and Xtream Codes IPTV playlists with EPG, favorites and search.' },
+                repo: ''
+            },
+            {
                 group: 'mod', id: 'pvr.eon', name: 'EON PVR Client',
                 type: { sr: 'PVR klijent', en: 'PVR client' },
                 desc: { sr: 'PVR klijent za EON: gledanje TV kanala uživo i slušanje radio stanica.', en: 'PVR client for EON: watch live TV channels and listen to radio stations.' },
@@ -4798,12 +4838,6 @@
                 links: [
                     { url: 'https://github.com/deklica/repo.dexe/tree/master/zips/pvr.eon', sr: 'ZIP builds ↗', en: 'ZIP builds ↗' }
                 ]
-            },
-            {
-                group: 'mod', id: 'plugin.video.playlistbee', name: 'Bee',
-                type: { sr: 'Video', en: 'Video' },
-                desc: { sr: 'Playlist Bee – gledanje M3U/M3U8, PLX i Xtream Codes IPTV lista, sa EPG-om, favoritima i pretragom.', en: 'Playlist Bee – watch M3U/M3U8, PLX and Xtream Codes IPTV playlists with EPG, favorites and search.' },
-                repo: ''
             },
             {
                 group: 'mod', id: 'skin.fentastic', name: 'FENtastic Plus (mod)',
@@ -4992,12 +5026,20 @@
         const stripKodi = t => String(t || '').replace(/\[CR\]/gi, ' ').replace(/\[\/?(?:COLOR[^\]]*|B|I|UPPERCASE|LOWERCASE|CAPITALIZE|LIGHT)\]/gi, '').replace(/\s+/g, ' ').trim();
 
         const cat = { data: null, loading: false, repo: 'dexe', type: 'all', q: '', sort: 'date', view: 'main', kodi: null, shown: PAGE_SIZE,
-                      inside: null, contents: {}, base: '', pendingEnter: null, saved: null, index: null, all: null };
-        try { cat.repo = sessionStorage.getItem('catRepo') || cat.repo; } catch (e) {}
+                      inside: null, contents: {}, base: '', pendingEnter: null, saved: null, index: null, all: null, dep: null, depOn: false };
+        try { cat.repo = sessionStorage.getItem('catRepo') || cat.repo; cat.depOn = sessionStorage.getItem('catDep') === '1'; } catch (e) {}
         const $ = id => document.getElementById(id);
         // 'all' = dEXE + Roooar + svi tuđi repoi (catalog/index.json, učitava se tek kad zatreba)
-        const allMode = () => !cat.inside && cat.repo === 'all';
-        const curAddons = () => cat.inside ? cat.inside.doc.addons : cat.repo === 'all' ? (cat.all || []) : ((cat.data.repos[cat.repo] || {}).addons || []);
+        // čip "Zastareli" (poslednji u kategorijama): repoi iz repos/_Deprecated (catalog/deprecated.json);
+        // vide se i pretražuju samo dok je on izabran, inače ne ulaze ni u spisak, ni u brojeve, ni u pretragu
+        const depMode = () => !cat.inside && cat.depOn;
+        const allMode = () => !cat.inside && !cat.depOn && cat.repo === 'all';
+        const baseAddons = () => cat.inside ? cat.inside.doc.addons : cat.repo === 'all' ? (cat.all || []) : ((cat.data.repos[cat.repo] || {}).addons || []);
+        const curAddons = () => depMode() ? (cat.dep || []) : baseAddons();
+        const setDep = on => {
+            cat.depOn = on; cat.shown = PAGE_SIZE;
+            try { sessionStorage.setItem('catDep', on ? '1' : '0'); } catch (e) {}
+        };
         const fetchFirst = (urls, i = 0) => fetch(urls[i], { cache: 'no-cache' })
             .then(r => { if (!r.ok) throw new Error(r.status); return r.json().then(json => ({ json, url: urls[i] })); })
             .catch(err => { if (i + 1 < urls.length) return fetchFirst(urls, i + 1); throw err; });
@@ -5045,6 +5087,21 @@
             document.querySelectorAll('#cat-repo > .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.repo === cat.repo));
             $('cat-all').classList.toggle('active', cat.repo === 'all');
             $('cat-all').setAttribute('aria-pressed', cat.repo === 'all' ? 'true' : 'false');
+        }
+        function loadDeprecated(done, quiet) {
+            if (cat.dep) { done(); return; }
+            if (cat.depFailed && quiet) return;
+            if (cat.depLoading) { cat.depLoading.push(done); return; }
+            cat.depLoading = [done];
+            if (!quiet) catStatus('Učitavanje spiska zastarelih repoa…', 'Loading the list of deprecated repos…');
+            fetchFirst([...new Set([cat.base + 'catalog/deprecated.json', 'catalog/deprecated.json'])])
+                .then(({ json }) => {
+                    cat.dep = (json.addons || []).map(a => Object.assign(a, { name: stripKodi(a.name) || a.id, author: stripKodi(a.author) || null, deprecated: true }));
+                    cat.depGenerated = json.generated;
+                    if (!quiet) catStatus();
+                })
+                .catch(() => { cat.dep = null; cat.depFailed = true; if (!quiet) catStatus('Spisak zastarelih repoa trenutno nije moguće učitati.', 'The list of deprecated repos could not be loaded right now.'); })
+                .finally(() => { const cbs = cat.depLoading; cat.depLoading = null; if (cat.dep) cbs.forEach(f => f()); });
         }
         function loadIndex(done) {
             if (cat.all) { done(); return; }
@@ -5118,7 +5175,7 @@
 
         function catFiltered(ignoreType) {
             let list = catSearched().filter(a => inView(a, cat.view));
-            if (!ignoreType && cat.type !== 'all') list = list.filter(a => a.type === cat.type);
+            if (!ignoreType && cat.type !== 'all' && !depMode()) list = list.filter(a => a.type === cat.type);
             if (cat.sort === 'name') {
                 list = list.slice().sort((x, y) => x.name.localeCompare(y.name, undefined, { sensitivity: 'base' }));
             }
@@ -5135,31 +5192,39 @@
         const cntSpan = (cls, n, max) => `<span class="${cls}" style="width:calc(${String(max).length}ch + 0.15em)">${n}</span>`;
 
         function renderChips() {
-            const all = curAddons().filter(inKodi);
+            const dm = depMode();                   // dok je izabran "Zastareli": ostali čipovi pokazuju kategorije repoa ispod, bez izbora
+            const all = (dm ? baseAddons() : curAddons()).filter(inKodi);
             const baseView = all.filter(a => inView(a, cat.view));
             const searched = catSearched();
-            const nowView = searched.filter(a => inView(a, cat.view));
+            const nowView = dm ? baseView : searched.filter(a => inView(a, cat.view));
             const baseCounts = {}, counts = {};
             baseView.forEach(a => { baseCounts[a.type] = (baseCounts[a.type] || 0) + 1; });
             nowView.forEach(a => { counts[a.type] = (counts[a.type] || 0) + 1; });
             if (cat.type !== 'all' && !baseCounts[cat.type]) cat.type = 'all';
-            const blank = allMode() && !catQuery() && !searched.length;
+            const blank = dm ? cat.repo === 'all' : allMode() && !catQuery() && !searched.length;
             const chip = (t, label, n, max) =>
-                `<button type="button" class="chip${cat.type === t ? ' active' : ''}${n || blank ? '' : ' empty'}" data-type="${t}">${label}${cntSpan('n', blank ? '\u00a0' : n, max)}</button>`;
+                `<button type="button" class="chip${!dm && cat.type === t ? ' active' : ''}${n || blank ? '' : ' empty'}" data-type="${t}">${label}${cntSpan('n', blank ? '\u00a0' : n, max)}</button>`;
+            const showDep = !cat.inside && !cat.depFailed;
+            if (showDep && !cat.dep) loadDeprecated(() => renderChips(), true);
+            const depN = dm ? catSearched().filter(a => inView(a, cat.view)).length : cat.dep ? cat.dep.length : '';
+            const depChip = () => `<button type="button" class="chip chip-dep${dm ? ' active' : ''}${depN === 0 ? ' empty' : ''}" data-dep="1" title="${escapeHtml(document.documentElement.getAttribute('data-lang') === 'sr' ? 'Repoi koji više ne rade (repos/_Deprecated)' : 'Repos that are down (repos/_Deprecated)')}">${bi('Zastareli', 'Deprecated')}${cntSpan('n', depN === '' ? '\u00a0' : depN, cat.dep ? cat.dep.length : 99)}</button>`;
             const types = ['all'].concat(TYPE_ORDER.filter(t => baseCounts[t]));
             const nums = { all: [nowView.length, baseView.length] };
             types.slice(1).forEach(t => { nums[t] = [counts[t] || 0, baseCounts[t]]; });
-            const box = $('cat-chips'), key = (cat.inside ? '@' + cat.inside.id : cat.repo) + '|' + cat.view + '|' + cat.kodi + '|' + types.join(',') + '|' + blank + '|' + document.documentElement.getAttribute('data-lang');
+            const box = $('cat-chips'), key = (cat.inside ? '@' + cat.inside.id : cat.repo) + '|' + cat.view + '|' + cat.kodi + '|' + types.join(',') + '|' + blank + '|' + dm + '|' + (showDep && !!cat.dep) + '|' + document.documentElement.getAttribute('data-lang');
             if (box.dataset.key === key) {
-                box.querySelectorAll('.chip').forEach(c => {
+                box.querySelectorAll('.chip:not(.chip-dep)').forEach(c => {
                     const [n] = nums[c.dataset.type] || [0];
                     c.querySelector('.n').textContent = blank ? '\u00a0' : n;
-                    c.classList.toggle('active', cat.type === c.dataset.type);
+                    c.classList.toggle('active', !dm && cat.type === c.dataset.type);
                     c.classList.toggle('empty', !n && !blank);
                 });
+                const dc = box.querySelector('.chip-dep');
+                if (dc) { dc.querySelector('.n').textContent = depN === '' ? '\u00a0' : depN; dc.classList.toggle('empty', depN === 0); }
             } else {
                 box.innerHTML = types.map((t, i) => chip(t, t === 'all' ? bi('Sve', 'All') : typeLabel(t), nums[t][0], nums[t][1])
-                    .replace('class="chip', `style="--d:${Math.min(i, 12) * 20}ms" class="chip chip-in`)).join('');
+                    .replace('class="chip', `style="--d:${Math.min(i, 12) * 20}ms" class="chip chip-in`)).join('') +
+                    (showDep && cat.dep ? depChip().replace('class="chip', `style="--d:${Math.min(types.length, 12) * 20}ms" class="chip chip-in`) : '');
                 box.dataset.key = key;
                 box.querySelectorAll('.chip-in').forEach(c => c.addEventListener('animationend', () => c.classList.remove('chip-in'), { once: true }));
             }
@@ -5208,6 +5273,7 @@
             const platforms = a.platforms && a.platforms.length
                 ? `<div class="cat-extra"><span class="cat-lbl">${bi('Platforme:', 'Platforms:')}</span> ${escapeHtml([...new Set(a.platforms.join(' ').split(/\s+/))].join(', '))}</div>` : '';
             let tail = '', actions = '';
+            const dep = !!a.deprecated;
             const contents = a.contents || (a.type === 'repository' && (cat.inside || allMode()) ? catContentsOf(a.id) : null);
             const isCurrent = cat.inside && a.type === 'repository' && a.id === cat.inside.id;
             if (contents && !isCurrent) {
@@ -5216,7 +5282,9 @@
                     tail = `<div class="cat-srcmsg device">${bi('Spisak addona daje sam addon na uređaju, pa se ovde ne može prikazati.', 'The add-on list is served by the add-on itself on the device, so it cannot be shown here.')}</div>`;
                 } else if (c.count || st === 'error') {
                     const n = c.count ? bi(`Addoni u repou: ${c.count}`, `Add-ons in repo: ${c.count}`) : bi('Addoni u repou: ne radi', 'Add-ons in repo: down');
-                    actions += `<button type="button" class="cat-enter" data-enter="${escapeHtml(a.id)}"><span class="cat-src ${st}"></span>${n}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`;
+                    const old = dep && a.outdated;      // zastareli repo koji radi, ali bez addona za Kodi 19+: narandžasto
+                    const ttl = old ? ` title="${escapeHtml(document.documentElement.getAttribute('data-lang') === 'sr' ? 'Radi, ali addoni su samo za Kodi 18 i starije' : 'Works, but the add-ons are for Kodi 18 and older only')}"` : '';
+                    actions += `<button type="button" class="cat-enter" data-enter="${escapeHtml(a.id)}"${ttl}><span class="cat-src ${old ? 'warn' : st}"></span>${n}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>`;
                 } else {
                     tail += `<div class="cat-srcmsg device">${bi('Repo je trenutno prazan.', 'The repo is currently empty.')}</div>`;
                 }
@@ -5240,25 +5308,27 @@
             }
             const own = a.type === 'repository' && (cat.inside ? isCurrent : !a.contents);
             return `
-                <article class="cat-card${a.broken ? ' is-broken' : ''}${a.dependency ? ' is-part' : ''}${own ? ' is-own' : ''}${ours ? ' is-ours' : ''}" data-id="${escapeHtml(catKey(a))}">
+                <article class="cat-card${a.broken ? ' is-broken' : ''}${dep ? ' is-dep' : ''}${a.dependency ? ' is-part' : ''}${own ? ' is-own' : ''}${ours ? ' is-ours' : ''}" data-id="${escapeHtml(catKey(a))}">
                     <div class="cat-side">${icon}${oursMark}${kodiBadge(a.kodi)}</div>
                     <div class="cat-body">
-                        <div class="cat-title"><h3 class="cat-name"><a href="#catalog/${escapeHtml(cat.inside ? cat.inside.id : (allMode() ? a.repo : cat.repo))}/${escapeHtml(a.id)}">${escapeHtml(a.name)}</a></h3>${tag}</div>
+                        <div class="cat-title"><h3 class="cat-name">${dep ? `<span>${escapeHtml(a.name)}</span>` : `<a href="#catalog/${escapeHtml(cat.inside ? cat.inside.id : (allMode() ? a.repo : cat.repo))}/${escapeHtml(a.id)}">${escapeHtml(a.name)}</a>`}</h3>${tag}</div>
                         <span class="cat-id">${escapeHtml(a.id)}</span>
                         <div class="cat-meta">
                             <span class="addon-type"><span class="tg">${typeLabel(a.type)}</span></span>
                             ${a.parent ? `<span class="cat-part"><span class="tg">${bi('Deo', 'Part')}</span></span>` : ''}
                             <span class="cat-ver">v${escapeHtml(a.version)}</span>
-                            ${(a.broken || a.external) ? `<span class="cat-flags">
+                            ${(a.broken || a.external || dep) ? `<span class="cat-flags">
                                 ${a.broken ? `<span class="addon-flag"><span class="tg">${bi('Ne radi', 'Broken')}</span></span>` : ''}
+                                ${dep ? `<span class="addon-flag"><span class="tg">${bi('Zastareo', 'Deprecated')}</span></span>` : ''}
                                 ${a.external ? `<span class="cat-ext" title="${escapeHtml(a.origin || '')}"><span class="tg">${bi('Eksterni', 'External')}</span></span>` : ''}
                             </span>` : ''}
                         </div>
+                        ${a.summary ? `<div class="cat-summary" title="${escapeHtml(a.summary)}">${escapeHtml(a.summary)}</div>` : ''}
                         ${platforms}
                         ${a.author ? `<div class="cat-extra"><span class="cat-lbl">${bi('Autor:', 'Author:')}</span> ${authorHtml(a.author)}</div>` : ''}
                         ${extra.map(x => `<div class="cat-extra">${x}</div>`).join('')}
                         ${a.external && a.origin && !allMode() ? `<div class="cat-extra cat-origin"><span class="cat-lbl">${bi('Iz repoa:', 'From:')}</span> ${escapeHtml(a.origin)}</div>` : ''}
-                        ${allMode() && a.repo ? `<div class="cat-extra cat-origin"><span class="cat-lbl">Repo:</span> ${a.own ? escapeHtml(a.rname) : `<button type="button" data-enter="${escapeHtml(a.repo)}">${escapeHtml(a.rname)}</button>`}</div>` : ''}
+                        ${allMode() && a.repo && !dep ? `<div class="cat-extra cat-origin"><span class="cat-lbl">Repo:</span> ${a.own ? escapeHtml(a.rname) : `<button type="button" data-enter="${escapeHtml(a.repo)}">${escapeHtml(a.rname)}</button>`}</div>` : ''}
                         ${tail}
                     </div>
                 </article>`;
@@ -5308,6 +5378,7 @@
                 <div class="cat-inside-main">${icon}<div>
                     <h3 class="cat-inside-name">${escapeHtml(e.name)}</h3>
                     <div class="cat-inside-sub">${escapeHtml(e.id)} · <span class="cat-ver">v${escapeHtml(e.version)}</span>${e.author ? ' · ' + escapeHtml(e.author) : ''} · ${bi(`${d.count} addona`, `${d.count} add-ons`)}${lastChange ? ' · ' + bi(`poslednja promena ${lastChange}`, `last change ${lastChange}`) : ''}</div>
+                    ${e.summary ? `<p class="cat-inside-summary">${escapeHtml(e.summary)}</p>` : ''}
                 </div></div>
                 ${note}
                 ${srcs ? `<div class="cat-inside-src">${srcs}</div>` : ''}`;
@@ -5319,13 +5390,21 @@
             if (!cat.data) { cat.pendingEnter = part; loadCatalog(); return; }
             const [id, focus] = String(part).split('/');
             const url = '#catalog/' + id + (focus ? '/' + focus : '');
+            let entry = null;
+            if (!cat.data.repos[id]) {
+                Object.values(cat.data.repos).some(r => (entry = r.addons.find(a => a.id === id && a.contents)));
+                if (!entry && !cat.dep && !cat.depFailed) { loadDeprecated(() => catEnter(part, mode), true); return; }
+                if (!entry && cat.dep) entry = cat.dep.find(a => a.id === id && a.contents) || null;   // zastareli repo
+            }
+            const depLeft = cat.depOn && !(entry && entry.deprecated);   // u zastareli repo se ulazi iz "Zastareli" i tu se vraća
+            if (depLeft) setDep(false);
             const setUrl = () => {
                 if (mode === 'push' && location.hash !== url) history.pushState(null, '', url);
                 else if (mode === 'replace') history.replaceState(null, '', url);
             };
             if (cat.data.repos[id]) {
                 if (cat.inside || cat.pendingEnter) catLeave(null);
-                if (cat.repo !== id || !$('cat-list').children.length) {
+                if (cat.repo !== id || depLeft || !$('cat-list').children.length) {
                     cat.repo = id; cat.type = 'all'; cat.shown = PAGE_SIZE;
                     try { sessionStorage.setItem('catRepo', cat.repo); } catch (e) {}
                     catRepoUi();
@@ -5335,8 +5414,6 @@
                 return;
             }
             if (cat.inside && cat.inside.id === id) { setUrl(); catFocus(focus); return; }
-            let entry = null;
-            Object.values(cat.data.repos).some(r => (entry = r.addons.find(a => a.id === id && a.contents)));
             if (!entry) { if (cat.inside) catLeave(mode); else if (!$('cat-list').children.length) renderCatalog({ fresh: true }); return; }
             setUrl();
             if (!cat.inside && !cat.pendingEnter) cat.saved = { repo: cat.repo, type: cat.type, q: cat.q, sort: cat.sort, view: cat.view, kodi: cat.kodi,
@@ -5452,6 +5529,7 @@
         function renderCatalog(opts) {
             if (!cat.data) return;
             if (allMode() && !cat.all) { loadIndex(() => renderCatalog(opts)); return; }
+            if (depMode() && !cat.dep) { loadDeprecated(() => renderCatalog(opts)); return; }
             const grid = $('cat-list');
             const old = [...grid.children].filter(c => c.classList.contains('cat-card'));
             if (!old.length || !grid.offsetWidth || catReduceMotion()) { renderCatalogNow(); return; }
@@ -5514,7 +5592,7 @@
             if (Math.abs(frac) > 0.01) grid.style.top = (-frac).toFixed(3) + 'px';
         }
         function catInfo(list) {
-            const when = cat.inside ? cat.inside.entry.contents.checked : cat.data.generated;
+            const when = cat.inside ? cat.inside.entry.contents.checked : depMode() ? cat.depGenerated : cat.data.generated;
             const gen = when ? fmtDate(when) : '';
             const recent = allMode() && !catQuery();
             const hint = $('cat-hint');
@@ -5522,7 +5600,9 @@
             if (recent) hint.innerHTML = bi('Upišite pojam za pretragu po svim repoima <br class="m-only">(najmanje 3 znaka).', 'Type a term to search all repos <br class="m-only">(at least 3 characters).');
             $('cat-info').innerHTML = (recent ? bi(`Promene u tuđim repoima u poslednjih ${RECENT_DAYS} dana: ${list.length}`, `Updated in third-party repos in the last ${RECENT_DAYS} days: ${list.length}`) : bi(`Prikazano: ${list.length}`, `Showing: ${list.length}`)) +
                 (allMode() ? ' · ' + bi(`svi repoi (${(cat.all || []).length} stavki)`, `all repos (${(cat.all || []).length} items)`) : '') +
-                (gen ? ' · ' + (cat.inside ? bi(`repo proveren ${gen}`, `repo checked ${gen}`) : bi(`katalog ažuriran ${gen}`, `catalog updated ${gen}`)) : '');
+                (depMode() ? ' · ' + bi(`ponovo radi: ${curAddons().filter(a => a.online).length}, radi samo za Kodi ≤18: ${curAddons().filter(a => a.outdated).length}`,
+                                        `back online: ${curAddons().filter(a => a.online).length}, working for Kodi ≤18 only: ${curAddons().filter(a => a.outdated).length}`) : '') +
+                (gen ? ' · ' + (cat.inside ? bi(`repo proveren ${gen}`, `repo checked ${gen}`) : depMode() ? bi(`izvori provereni ${gen}`, `sources checked ${gen}`) : bi(`katalog ažuriran ${gen}`, `catalog updated ${gen}`)) : '');
             if (!list.length) {
                 if (recent) catStatus(`Nema promena u tuđim repoima u poslednjih ${RECENT_DAYS} dana.`, `No updates in third-party repos in the last ${RECENT_DAYS} days.`);
                 else catStatus(cat.inside && !curAddons().length ? 'Spisak addona ovog repoa nije dostupan.' : 'Nema rezultata za zadatu pretragu.',
@@ -5533,15 +5613,17 @@
 
         $('cat-repo').addEventListener('click', e => {
             const b = e.target.closest('.seg-btn');
-            if (!b || b.dataset.repo === cat.repo) return;
-            if (b.dataset.repo === 'all') { catAllOn(); return; }
+            if (!b || (b.dataset.repo === cat.repo && !cat.depOn)) return;
+            if (cat.depOn) setDep(false);
+            if (b.dataset.repo === 'all') { catAllOn(true); return; }
             cat.repo = b.dataset.repo; cat.type = 'all'; cat.shown = PAGE_SIZE;
             try { sessionStorage.setItem('catRepo', cat.repo); } catch (e) {}
             catRepoUi();
             renderCatalog({ fresh: true });
         });
-        function catAllOn() {
-            if (cat.repo === 'all' || !cat.data) return;
+        function catAllOn(force) {
+            if (cat.depOn) { setDep(false); force = true; }
+            if ((cat.repo === 'all' && !force) || !cat.data) return;
             cat.repo = 'all'; cat.type = 'all'; cat.shown = PAGE_SIZE;
             try { sessionStorage.setItem('catRepo', cat.repo); } catch (e) {}
             catRepoUi();
@@ -5618,9 +5700,17 @@
         $('cat-chips').addEventListener('click', e => {
             const c = e.target.closest('.chip');
             if (!c) return;
+            if (c.dataset.dep) {
+                setDep(!cat.depOn);
+                if (cat.depOn) loadDeprecated(() => renderCatalog({ fresh: true }));
+                else renderCatalog({ fresh: true });
+                return;
+            }
+            const leaving = cat.depOn;
+            if (leaving) setDep(false);
             cat.type = c.dataset.type;
             cat.shown = PAGE_SIZE;
-            renderCatalog();
+            renderCatalog(leaving ? { fresh: true } : undefined);
         });
         let catSearchTimer = null;
         $('cat-search').addEventListener('input', e => {
